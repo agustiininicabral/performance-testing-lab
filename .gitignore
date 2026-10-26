@@ -1,0 +1,36 @@
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Virtual environments
+.venv/
+venv/
+
+# Local environment files
+.env
+.env.*
+!.env.example
+
+# Logs, coverage, and generated reports
+*.log
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+reports/
+
+# Locust CSV output
+locust_*.csv
+*_stats.csv
+*_failures.csv
+*_exceptions.csv
+*_stats_history.csv
+
+# Locust HTML reports
+locust_*.html
+locust_report.html
+load_test_report.html
+report.html
