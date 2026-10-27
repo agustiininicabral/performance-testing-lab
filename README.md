@@ -62,6 +62,13 @@ python -m app.performance_report --current results/current_stats.csv --baseline 
 
 The tool writes JSON and Markdown reports. Exit code `0` means no configured regression was detected, `1` means a regression gate failed, and `2` indicates invalid input. Default gates: p95/p99 latency increase over 20%, failure-rate increase over 0.5 percentage points, or throughput drop over 15%. See [performance reporting documentation](docs/performance-reporting.md).
 
+Run a synthetic comparison that should pass, without starting the API:
+
+```powershell
+python -m app.performance_report --current examples/current_stats_pass.csv --baseline examples/baseline_stats.csv --out reports/demo-pass
+if ($LASTEXITCODE -ne 0) { throw "Expected the passing demo to exit 0; exit code was $LASTEXITCODE" }
+```
+
 Run the synthetic regression demonstration without starting the API:
 
 ```powershell
