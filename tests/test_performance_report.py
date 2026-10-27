@@ -147,3 +147,27 @@ def test_cli_returns_two_for_bad_input(tmp_path: Path) -> None:
     )
     assert result.returncode == 2
     assert "ERROR:" in result.stderr
+
+
+
+def test_rejects_missing_required_columns(tmp_path: Path) -> None:
+    malformed = tmp_path / "malformed.csv"
+    malformed.write_text("Name,Request Count\\nAggregated,10\\n", encoding="utf-8")
+    with pytest.raises(ValueError, match="missing required columns"):
+        read_locust_stats(malformed)
+
+
+def test_rejects_fractional_request_counts(tmp_path: Path) -> None:
+    malformed = tmp_path / "fractional.csv"
+    malformed.write_text(
+        "Name,Request Count,Failure Count,Median Response Time,95%,99%,Requests/s\\n"
+        "Aggregated,10.5,0,10,20,30,5\\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match="whole numbers"):
+        read_locust_stats(malformed)
+
+
+def test_rejects_negative_threshold_even_without_baseline() -> None:
+    with pytest.raises(ValueError, match="finite and non-negative"):
+        build_report(Metrics(10, 0, 0, 5, 10, 20, 3), max_p95_increase_pct=-1)
