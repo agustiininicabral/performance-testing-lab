@@ -58,6 +58,10 @@ def read_locust_stats(path: str | Path) -> Metrics:
         reader = csv.DictReader(stream)
         if not reader.fieldnames:
             raise ValueError(f"Stats CSV has no header: {csv_path}")
+        rows = list(reader)
+        if not rows:
+            raise ValueError(f"Stats CSV has no data rows: {csv_path}")
+
         required_groups = (
             ("Request Count", "Requests"),
             ("Failure Count", "Failures"),
@@ -75,9 +79,6 @@ def read_locust_stats(path: str | Path) -> Metrics:
             raise ValueError(
                 f"Stats CSV is missing required columns: {', '.join(missing)}"
             )
-        rows = list(reader)
-    if not rows:
-        raise ValueError(f"Stats CSV has no data rows: {csv_path}")
 
     aggregate = next(
         (
