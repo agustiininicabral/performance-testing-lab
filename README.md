@@ -15,7 +15,7 @@ A reproducible QA portfolio project combining a deterministic FastAPI service, c
 Use Python 3.12. In PowerShell:
 
     python -m venv .venv
-    .\\.venv\\Scripts\\Activate.ps1
+    ./.venv/Scripts/Activate.ps1
     python -m pip install -r requirements.txt
 
 Validate the environment and run the checks:
@@ -39,12 +39,12 @@ The test suite uses FastAPI TestClient in-process and does not need a running se
 
 Keep the API running, then open a second PowerShell terminal from the repository root. The default run is five users for 30 seconds:
 
-    .\\scripts\\run_load_test.ps1
+    ./scripts/run_load_test.ps1
 
 Choose a bounded profile with parameters:
 
-    .\\scripts\\run_load_test.ps1 -Users 2 -SpawnRate 1 -RunTime 10s
-    .\\scripts\\run_load_test.ps1 -Users 10 -SpawnRate 2 -RunTime 2m
+    ./scripts/run_load_test.ps1 -Users 2 -SpawnRate 1 -RunTime 10s
+    ./scripts/run_load_test.ps1 -Users 10 -SpawnRate 2 -RunTime 2m
 
 The helper restricts the user count to 1–50, spawn rate to 1–10, and duration to a small set of supported values. It checks the local health endpoint before starting Locust. CSV output is written with the results/performance prefix; these generated files are intentionally not committed.
 
