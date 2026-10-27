@@ -1,0 +1,2 @@
+Type,Name,Request Count,Failure Count,Median Response Time,95%,99%,Requests/s
+,Aggregated,100,2,18,115,190,7.4
