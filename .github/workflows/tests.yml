@@ -30,6 +30,28 @@ jobs:
         run: python -m ruff check app tests load_tests
       - name: Run unit tests
         run: python -m pytest -q
+      - name: Validate passing and failing report demos
+        shell: bash
+        run: |
+          python -m app.performance_report --current examples/current_stats_pass.csv --baseline examples/baseline_stats.csv --out reports/demo-pass
+          set +e
+          python -m app.performance_report --current examples/current_stats_regression.csv --baseline examples/baseline_stats.csv --out reports/demo-regression
+          result=$?
+          set -e
+          if [ "$result" -ne 1 ]; then
+            echo "Expected regression demo exit code 1, received $result"
+            exit 1
+          fi
+      - name: Upload report demo artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-report-demos
+          path: |
+            reports/demo-pass.json
+            reports/demo-pass.md
+            reports/demo-regression.json
+            reports/demo-regression.md
+          if-no-files-found: error
 
   load-smoke:
     name: Local load-test smoke check
