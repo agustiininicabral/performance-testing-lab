@@ -80,7 +80,7 @@ The sample data is synthetic and does not represent a measured benchmark.
 
 ## CI behavior
 
-GitHub Actions runs dependency checks, Ruff, unit tests, and a two-user/10-second Locust smoke test against the local API. The report tests run as part of pytest. These checks validate the demo and test scenario; they are not production benchmarks, capacity estimates, or SLA guarantees.
+GitHub Actions runs dependency checks, Ruff, unit tests, both synthetic report demos, and a two-user/10-second Locust smoke test against the local API. The report demo JSON and Markdown files are uploaded as the `performance-report-demos` workflow artifact. These checks validate the demo and test scenario; they are not production benchmarks, capacity estimates, or SLA guarantees.
 
 ## Project structure
 
