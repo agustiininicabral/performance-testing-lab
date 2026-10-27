@@ -1,77 +1,91 @@
 # Performance Testing Lab
 
-A reproducible QA portfolio project combining a deterministic FastAPI service, API contract tests, Python quality gates, and bounded Locust load-smoke tests. The included CI workflow and Windows helper target loopback only; they do not load-test public services.
+A reproducible QA portfolio project combining a deterministic FastAPI service, bounded Locust load tests, and a report generator that detects performance regressions against a baseline. The supplied runner targets loopback only; do not load-test systems without authorization.
 
 ## What this demonstrates
 
-- API status, response contract, deterministic data, unique IDs, and unknown-route checks.
-- Ruff formatting and lint checks, pytest, and dependency consistency in CI.
-- Locust checks response payloads rather than treating every HTTP 200 as success.
-- A CI load-smoke job that starts the local API and runs two simulated users for 10 seconds.
-- A Windows runner with a health pre-check, bounded parameters, and CSV output.
+- API contract checks for status, response shape, deterministic data, unique IDs, and unknown routes.
+- Python dependency, formatting, lint, and pytest quality gates in GitHub Actions.
+- A bounded CI load smoke test against a local demo API.
+- Locust CSV analysis with median, p95/p99 latency, failure rate, and throughput.
+- Configurable regression gates with machine-readable JSON and human-readable Markdown reports.
+- Synthetic fixtures that demonstrate regression detection without depending on external services.
 
 ## Requirements and setup
 
 Use Python 3.12. In PowerShell:
 
-    python -m venv .venv
-    ./.venv/Scripts/Activate.ps1
-    python -m pip install -r requirements-dev.txt
+```powershell
+python -m venv .venv
+./.venv/Scripts/Activate.ps1
+python -m pip install -r requirements-dev.txt
+python -m pip check
+python -m ruff format --check app tests load_tests
+python -m ruff check app tests load_tests
+python -m pytest -q
+```
 
-Validate the environment:
+## API and load test
 
-    python -m pip check
-    python -m ruff format --check app tests load_tests
-    python -m ruff check app tests load_tests
-    python -m pytest -q
+Start the API in one terminal:
 
-## API
+```powershell
+python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
+```
 
-Start the API in one terminal. It binds only to the local loopback interface:
+- `GET /health` returns `{"status":"healthy"}`.
+- `GET /api/items` returns three deterministic sample items.
 
-    python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
+In a second terminal, run a bounded load test (default five users for 30 seconds):
 
-- GET /health returns a JSON object with status healthy.
-- GET /api/items returns three deterministic sample items.
+```powershell
+./scripts/run_load_test.ps1
+# Short smoke profile
+./scripts/run_load_test.ps1 -Users 2 -SpawnRate 1 -RunTime 10s
+```
 
-The unit tests use FastAPI TestClient in-process; they do not require a running server or Internet access.
+The helper constrains users to 1–50, spawn rate to 1–10, and duration to a short allowlist. It checks the local health endpoint first and writes Locust CSV files under `results/`.
 
-## Local load test on Windows
+## Generate and compare reports
 
-Keep the API running, then open a second PowerShell terminal from the repository root. The default profile uses five simulated users for 30 seconds:
+Create a report from a Locust run:
 
-    ./scripts/run_load_test.ps1
+```powershell
+python -m app.performance_report --current results/performance_stats.csv --out reports/current
+```
 
-Use a smaller smoke profile or a longer local run:
+Compare a current run against a baseline:
 
-    ./scripts/run_load_test.ps1 -Users 2 -SpawnRate 1 -RunTime 10s
-    ./scripts/run_load_test.ps1 -Users 10 -SpawnRate 2 -RunTime 2m
+```powershell
+python -m app.performance_report --current results/current_stats.csv --baseline results/baseline_stats.csv --out reports/comparison
+```
 
-The helper limits users to 1–50, spawn rate to 1–10, and duration to 10 seconds, 30 seconds, 1, 2, or 5 minutes. It verifies the local health endpoint before starting Locust. CSV output is written under results/ and is intentionally excluded from Git.
+The tool writes JSON and Markdown reports. Exit code `0` means no configured regression was detected, `1` means a regression gate failed, and `2` indicates invalid input. Default gates: p95/p99 latency increase over 20%, failure-rate increase over 0.5 percentage points, or throughput drop over 15%. See [performance reporting documentation](docs/performance-reporting.md).
 
-For direct Locust usage:
+Run the synthetic regression demonstration without starting the API:
 
-    python -m locust -f load_tests/locustfile.py --headless --users 2 --spawn-rate 1 --run-time 30s
+```powershell
+python -m app.performance_report --current examples/current_stats_regression.csv --baseline examples/baseline_stats.csv --out reports/demo
+if ($LASTEXITCODE -ne 1) { throw "Expected a detected regression; exit code was $LASTEXITCODE" }
+```
 
-The scenario weights /health three times as heavily as /api/items and uses a 5-second request timeout. PERF_TEST_HOST can configure the target when running Locust directly. Only test systems you own or have explicit permission to test; the supplied PowerShell helper always uses 127.0.0.1.
+The sample data is synthetic and does not represent a measured benchmark.
 
 ## CI behavior
 
-Every push and pull request runs two jobs:
-
-1. Quality: install development dependencies, run pip check, Ruff format/lint, and pytest.
-2. Load smoke: start the local API and run a bounded Locust scenario with two users for 10 seconds.
-
-CI smoke tests confirm that the demo API and load scenario work together without recorded failures. They are not a benchmark, capacity estimate, production SLA, or performance guarantee.
-
-## Interpreting results
-
-Review total requests, failures, throughput, and median/p95/p99 latency in Locust output or generated CSV files. Compare runs only when the machine, Python version, and load profile are held constant. Repeat runs and document the environment. Do not treat a short localhost smoke test as a production baseline.
+GitHub Actions runs dependency checks, Ruff, unit tests, and a two-user/10-second Locust smoke test against the local API. The report tests run as part of pytest. These checks validate the demo and test scenario; they are not production benchmarks, capacity estimates, or SLA guarantees.
 
 ## Project structure
 
-- app/main.py — deterministic FastAPI endpoints.
-- tests/test_api.py — API contract and repeatability checks.
-- load_tests/locustfile.py — validated Locust user behavior.
-- scripts/run_load_test.ps1 — bounded Windows load-test runner.
-- .github/workflows/tests.yml — quality gates and CI load smoke.
+- `app/main.py` — deterministic FastAPI endpoints.
+- `app/performance_report.py` — Locust CSV parsing, regression comparison, JSON/Markdown report CLI.
+- `tests/` — API and report parser/CLI/regression tests.
+- `load_tests/locustfile.py` — Locust user behavior.
+- `scripts/run_load_test.ps1` — bounded Windows load-test runner.
+- `examples/` — synthetic CSVs for repeatable report demonstrations.
+- `docs/performance-reporting.md` — thresholds, usage, and limitations.
+- `.github/workflows/tests.yml` — quality gates and CI load smoke.
+
+## Safety and interpretation
+
+Only load-test systems you own or have explicit permission to test. Keep comparisons on equivalent environments and profiles. A short localhost run is useful for smoke testing and regression signals, not a production capacity forecast.
