@@ -166,3 +166,24 @@ def test_rejects_fractional_request_counts(tmp_path: Path) -> None:
 def test_rejects_negative_threshold_even_without_baseline() -> None:
     with pytest.raises(ValueError, match="finite and non-negative"):
         build_report(Metrics(10, 0, 0, 5, 10, 20, 3), max_p95_increase_pct=-1)
+
+
+def test_rejects_blank_required_metric(tmp_path: Path) -> None:
+    with pytest.raises(ValueError, match="Missing numeric value"):
+        read_locust_stats(write_stats(tmp_path / "blank.csv", median=""))
+
+
+@pytest.mark.parametrize(
+    ("metric_values", "message"),
+    [
+        ({"median": -1}, "non-negative"),
+        ({"rps": -1}, "non-negative"),
+        ({"median": 30, "p95": 20}, "median <= p95 <= p99"),
+        ({"p95": 40, "p99": 30}, "median <= p95 <= p99"),
+    ],
+)
+def test_rejects_invalid_latency_and_throughput_metrics(
+    tmp_path: Path, metric_values: dict[str, float], message: str
+) -> None:
+    with pytest.raises(ValueError, match=message):
+        read_locust_stats(write_stats(tmp_path / "invalid-metric.csv", **metric_values))
