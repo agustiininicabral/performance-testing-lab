@@ -29,11 +29,18 @@ Override a gate with `--max-p95-increase`, `--max-p99-increase`, `--max-failure-
 
 ## Synthetic demo
 
-The committed files in `examples/` are small, synthetic Locust-format examples intended to demonstrate the report and a failing regression gate. They are not measured performance of a real service.
+The committed files in `examples/` are small, synthetic Locust-format examples intended to demonstrate a passing comparison and a failing regression gate. They are not measured performance of a real service.
 
 ```powershell
 python -m app.performance_report --current examples/current_stats_regression.csv --baseline examples/baseline_stats.csv --out reports/demo
 if ($LASTEXITCODE -ne 1) { throw "Expected the synthetic regression demo to exit 1; got $LASTEXITCODE" }
+```
+
+Demonstrate a comparison that stays within the default thresholds:
+
+```powershell
+python -m app.performance_report --current examples/current_stats_pass.csv --baseline examples/baseline_stats.csv --out reports/demo-pass
+if ($LASTEXITCODE -ne 0) { throw "Expected the passing demo to exit 0; got $LASTEXITCODE" }
 ```
 
 ## Comparability and limitations
