@@ -40,7 +40,9 @@ def _number(row: dict[str, str], *names: str, default: float = 0.0) -> float:
             try:
                 value = float(raw.replace(",", ""))
             except ValueError as exc:
-                raise ValueError(f"Invalid numeric value for {name!r}: {raw!r}") from exc
+                raise ValueError(
+                    f"Invalid numeric value for {name!r}: {raw!r}"
+                ) from exc
             if not math.isfinite(value):
                 raise ValueError(f"Non-finite numeric value for {name!r}: {raw!r}")
             return value
@@ -195,7 +197,9 @@ def build_report(
         else []
     )
     return {
-        "status": "REGRESSION" if any(item.regressed for item in comparisons) else "PASS",
+        "status": "REGRESSION"
+        if any(item.regressed for item in comparisons)
+        else "PASS",
         "current": asdict(current),
         "baseline": asdict(baseline) if baseline else None,
         "comparisons": [asdict(item) for item in comparisons],
@@ -265,7 +269,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         "--current", required=True, help="Current Locust *_stats.csv file"
     )
     parser.add_argument("--baseline", help="Optional Locust *_stats.csv baseline file")
-    parser.add_argument("--out", default="reports/performance-report", help="Output path prefix")
+    parser.add_argument(
+        "--out", default="reports/performance-report", help="Output path prefix"
+    )
     parser.add_argument("--max-p95-increase", type=float, default=20.0)
     parser.add_argument("--max-p99-increase", type=float, default=20.0)
     parser.add_argument("--max-failure-rate-increase", type=float, default=0.5)
