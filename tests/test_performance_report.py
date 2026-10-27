@@ -75,9 +75,7 @@ def test_rejects_missing_or_empty_stats(tmp_path: Path) -> None:
 
 def test_rejects_inconsistent_counts(tmp_path: Path) -> None:
     with pytest.raises(ValueError, match="inconsistent"):
-        read_locust_stats(
-            write_stats(tmp_path / "bad.csv", requests=2, failures=3)
-        )
+        read_locust_stats(write_stats(tmp_path / "bad.csv", requests=2, failures=3))
 
 
 def test_detects_latency_failure_rate_and_throughput_regressions() -> None:
@@ -103,12 +101,8 @@ def test_build_report_passes_within_thresholds() -> None:
 def test_cli_writes_json_and_markdown_and_exits_one_on_regression(
     tmp_path: Path,
 ) -> None:
-    baseline = write_stats(
-        tmp_path / "baseline_stats.csv", p95=100, p99=200, rps=10
-    )
-    current = write_stats(
-        tmp_path / "current_stats.csv", p95=150, p99=300, rps=5
-    )
+    baseline = write_stats(tmp_path / "baseline_stats.csv", p95=100, p99=200, rps=10)
+    current = write_stats(tmp_path / "current_stats.csv", p95=150, p99=300, rps=5)
     prefix = tmp_path / "reports" / "result"
     result = subprocess.run(
         [
@@ -149,12 +143,9 @@ def test_cli_returns_two_for_bad_input(tmp_path: Path) -> None:
     assert "ERROR:" in result.stderr
 
 
-
 def test_rejects_missing_required_columns(tmp_path: Path) -> None:
     malformed = tmp_path / "malformed.csv"
-    malformed.write_text(
-        "Name,Request Count\nAggregated,10\n", encoding="utf-8"
-    )
+    malformed.write_text("Name,Request Count\nAggregated,10\n", encoding="utf-8")
     with pytest.raises(ValueError, match="missing required columns"):
         read_locust_stats(malformed)
 
@@ -174,6 +165,4 @@ def test_rejects_fractional_request_counts(tmp_path: Path) -> None:
 
 def test_rejects_negative_threshold_even_without_baseline() -> None:
     with pytest.raises(ValueError, match="finite and non-negative"):
-        build_report(
-            Metrics(10, 0, 0, 5, 10, 20, 3), max_p95_increase_pct=-1
-        )
+        build_report(Metrics(10, 0, 0, 5, 10, 20, 3), max_p95_increase_pct=-1)
