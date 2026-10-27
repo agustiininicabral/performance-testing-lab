@@ -56,6 +56,23 @@ def read_locust_stats(path: str | Path) -> Metrics:
         reader = csv.DictReader(stream)
         if not reader.fieldnames:
             raise ValueError(f"Stats CSV has no header: {csv_path}")
+        required_groups = (
+            ("Request Count", "Requests"),
+            ("Failure Count", "Failures"),
+            ("Median Response Time", "Median Response Time (ms)"),
+            ("95%", "95%ile"),
+            ("99%", "99%ile"),
+            ("Requests/s", "Current RPS"),
+        )
+        missing = [
+            " / ".join(group)
+            for group in required_groups
+            if not any(name in reader.fieldnames for name in group)
+        ]
+        if missing:
+            raise ValueError(
+                f"Stats CSV is missing required columns: {', '.join(missing)}"
+            )
         rows = list(reader)
     if not rows:
         raise ValueError(f"Stats CSV has no data rows: {csv_path}")
@@ -69,8 +86,12 @@ def read_locust_stats(path: str | Path) -> Metrics:
         None,
     )
     row = aggregate or rows[0]
-    requests = int(_number(row, "Request Count", "Requests"))
-    failures = int(_number(row, "Failure Count", "Failures"))
+    requests_value = _number(row, "Request Count", "Requests")
+    failures_value = _number(row, "Failure Count", "Failures")
+    if not requests_value.is_integer() or not failures_value.is_integer():
+        raise ValueError("Request and failure counts must be whole numbers.")
+    requests = int(requests_value)
+    failures = int(failures_value)
     if requests < 0 or failures < 0 or failures > requests:
         raise ValueError("Request and failure counts are inconsistent.")
     failure_rate = failures / requests * 100 if requests else 0.0
@@ -153,6 +174,14 @@ def build_report(
     max_failure_rate_increase_pct: float = 0.5,
     min_rps_drop_pct: float = 15.0,
 ) -> dict[str, object]:
+    limits = (
+        max_p95_increase_pct,
+        max_p99_increase_pct,
+        max_failure_rate_increase_pct,
+        min_rps_drop_pct,
+    )
+    if any(limit < 0 or not math.isfinite(limit) for limit in limits):
+        raise ValueError("Regression thresholds must be finite and non-negative.")
     comparisons = (
         compare_metrics(
             baseline,
