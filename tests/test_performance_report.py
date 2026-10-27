@@ -56,7 +56,7 @@ def write_stats(
 
 def test_reads_aggregated_locust_stats(tmp_path: Path) -> None:
     metrics = read_locust_stats(
-        write_stats(tmp_path / "run_stats.csv", failures=2, p95=44)
+        write_stats(tmp_path / "run_stats.csv", failures=2, p95=44, p99=50)
     )
     assert metrics.requests == 100
     assert metrics.failures == 2
