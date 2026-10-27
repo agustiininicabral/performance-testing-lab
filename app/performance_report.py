@@ -33,7 +33,7 @@ class Comparison:
     regressed: bool
 
 
-def _number(row: dict[str, str], *names: str, default: float = 0.0) -> float:
+def _number(row: dict[str, str], *names: str) -> float:
     for name in names:
         raw = row.get(name)
         if raw is not None and raw.strip():
@@ -46,7 +46,7 @@ def _number(row: dict[str, str], *names: str, default: float = 0.0) -> float:
             if not math.isfinite(value):
                 raise ValueError(f"Non-finite numeric value for {name!r}: {raw!r}")
             return value
-    return default
+    raise ValueError(f"Missing numeric value for {names[0]!r}.")
 
 
 def read_locust_stats(path: str | Path) -> Metrics:
@@ -97,15 +97,24 @@ def read_locust_stats(path: str | Path) -> Metrics:
     failures = int(failures_value)
     if requests < 0 or failures < 0 or failures > requests:
         raise ValueError("Request and failure counts are inconsistent.")
+    median_ms = _number(row, "Median Response Time", "Median Response Time (ms)")
+    p95_ms = _number(row, "95%", "95%ile")
+    p99_ms = _number(row, "99%", "99%ile")
+    requests_per_second = _number(row, "Requests/s", "Current RPS")
+    if any(value < 0 for value in (median_ms, p95_ms, p99_ms, requests_per_second)):
+        raise ValueError("Latency and throughput metrics must be non-negative.")
+    if not median_ms <= p95_ms <= p99_ms:
+        raise ValueError("Latency percentiles must satisfy median <= p95 <= p99.")
+
     failure_rate = failures / requests * 100 if requests else 0.0
     return Metrics(
         requests=requests,
         failures=failures,
         failure_rate_pct=round(failure_rate, 4),
-        median_ms=_number(row, "Median Response Time", "Median Response Time (ms)"),
-        p95_ms=_number(row, "95%", "95%ile"),
-        p99_ms=_number(row, "99%", "99%ile"),
-        requests_per_second=_number(row, "Requests/s", "Current RPS"),
+        median_ms=median_ms,
+        p95_ms=p95_ms,
+        p99_ms=p99_ms,
+        requests_per_second=requests_per_second,
     )
 
 
