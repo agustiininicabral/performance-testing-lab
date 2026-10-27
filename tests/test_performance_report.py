@@ -143,7 +143,6 @@ def test_cli_returns_two_for_bad_input(tmp_path: Path) -> None:
     assert "ERROR:" in result.stderr
 
 
-
 def test_rejects_missing_required_columns(tmp_path: Path) -> None:
     malformed = tmp_path / "malformed.csv"
     malformed.write_text("Name,Request Count\nAggregated,10\n", encoding="utf-8")
