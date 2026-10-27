@@ -261,7 +261,9 @@ def render_markdown(report: dict[str, object]) -> str:
 
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--current", required=True, help="Current Locust *_stats.csv file")
+    parser.add_argument(
+        "--current", required=True, help="Current Locust *_stats.csv file"
+    )
     parser.add_argument("--baseline", help="Optional Locust *_stats.csv baseline file")
     parser.add_argument("--out", default="reports/performance-report", help="Output path prefix")
     parser.add_argument("--max-p95-increase", type=float, default=20.0)
