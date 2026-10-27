@@ -75,9 +75,7 @@ def test_rejects_missing_or_empty_stats(tmp_path: Path) -> None:
 
 def test_rejects_inconsistent_counts(tmp_path: Path) -> None:
     with pytest.raises(ValueError, match="inconsistent"):
-        read_locust_stats(
-            write_stats(tmp_path / "bad.csv", requests=2, failures=3)
-        )
+        read_locust_stats(write_stats(tmp_path / "bad.csv", requests=2, failures=3))
 
 
 def test_detects_latency_failure_rate_and_throughput_regressions() -> None:
@@ -103,12 +101,8 @@ def test_build_report_passes_within_thresholds() -> None:
 def test_cli_writes_json_and_markdown_and_exits_one_on_regression(
     tmp_path: Path,
 ) -> None:
-    baseline = write_stats(
-        tmp_path / "baseline_stats.csv", p95=100, p99=200, rps=10
-    )
-    current = write_stats(
-        tmp_path / "current_stats.csv", p95=150, p99=300, rps=5
-    )
+    baseline = write_stats(tmp_path / "baseline_stats.csv", p95=100, p99=200, rps=10)
+    current = write_stats(tmp_path / "current_stats.csv", p95=150, p99=300, rps=5)
     prefix = tmp_path / "reports" / "result"
     result = subprocess.run(
         [
