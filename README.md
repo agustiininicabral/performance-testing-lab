@@ -12,7 +12,7 @@ Create an isolated environment and install the project dependencies:
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
-python -m pip install -r requirements.txt
+python -m pip install -r requirements-dev.txt
 ```
 
 The requirements file pins direct packages; pip resolves their transitive dependencies during installation.
@@ -34,10 +34,12 @@ The pytest tests use FastAPI's in-process `TestClient`. They do not start a serv
 
 ```powershell
 python -m pip check
+python -m ruff format --check app tests load_tests
+python -m ruff check app tests load_tests
 python -m pytest -q
 ```
 
-GitHub Actions runs dependency checks and these unit tests on pushes and pull requests. CI does not run load tests.
+GitHub Actions runs dependency consistency, Ruff formatting/lint checks, and these unit tests on pushes and pull requests. CI does not run load tests. `requirements-dev.txt` includes the runtime dependencies and a pinned Ruff version; `pyproject.toml` defines the lint rules.
 
 ## Local load test
 

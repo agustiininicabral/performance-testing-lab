@@ -1,4 +1,4 @@
-﻿from locust import HttpUser, between, task
+from locust import HttpUser, between, task
 
 
 class LocalApiUser(HttpUser):
@@ -53,4 +53,6 @@ class LocalApiUser(HttpUser):
                 )
             )
             if not valid_items:
-                response.failure("Expected a list of three items with integer id and string name")
+                response.failure(
+                    "Expected a list of three items with integer id and string name"
+                )
